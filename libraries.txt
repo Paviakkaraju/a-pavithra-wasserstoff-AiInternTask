@@ -1,0 +1,11 @@
+requests
+tqdm
+rich
+pymongo
+PyPDF2
+nltk
+sumy
+numpy
+pandas
+PyMuPDF
+asyncio
