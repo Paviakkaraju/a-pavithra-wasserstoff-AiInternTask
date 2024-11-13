@@ -8,6 +8,7 @@ import re
 import asyncio
 from pymongo import MongoClient
 
+# Extracts the text from the PDF
 def extract_text(path):
     with open(path, 'rb') as file:
         pdf_reader = PyPDF2.PdfReader(file)
@@ -22,6 +23,7 @@ def extract_text(path):
 
     return text
 
+# Pre-processing and Keywords extraction
 def get_keywords(text, top_n=10):
     cleaned1 = re.sub(r'[\s+]', ' ', text)
     cleaned2 = re.sub(r"\([^)]*\)", "", cleaned1.lower())

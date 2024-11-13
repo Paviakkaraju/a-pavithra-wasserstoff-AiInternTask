@@ -3,11 +3,13 @@ import json
 import requests
 from rich.progress import track
 
+# Extracting the URLs from the Json file
 def extract_urls(json_file):
     with open(json_file, 'r') as jf:
         data = json.load(jf)
         return data
 
+# Downloading the PDF with the URLs
 def download_pdf(name, url, download_folder):
     file_name = f'{name}.pdf'
     file_path = os.path.join(download_folder, file_name)
@@ -23,7 +25,7 @@ def download_pdf(name, url, download_folder):
     except requests.exceptions.RequestException as e:
         print(f'Error downloading {url}: {e}')
         
-    
+# Checks whether it is already processed
 def process_json(json_file):
     flag_file = os.path.join(os.path.dirname(json_file), 'processed.txt')
     
