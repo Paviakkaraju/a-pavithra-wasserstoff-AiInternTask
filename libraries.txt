@@ -10,3 +10,4 @@ pandas
 PyMuPDF
 asyncio
 scikit-learn
+spacy

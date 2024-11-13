@@ -16,36 +16,32 @@ for json_file in json_list:
 # Getting the pdf documents
 file_paths = [os.path.join(path, file) for file in os.listdir(path) if file.endswith('.pdf')] 
 
+# Updating the metadata in MongoDB
+client = pymongo.MongoClient("mongodb://localhost:27017/")  # Replace with your connection string
+db = client["intern_task"]
+collection = db["documents"]
 
-# Inserting metadata into MongoDB Collection
+async def process_pdf(pdf_path):
+    # Extract metadata, keywords, and summary for the PDF
+    metadata = get_metadata(pdf_path)
+    keywords = get_keywords(extract_text(pdf_path))
+    # summary = 
+
+
+    await asyncio.gather(
+        update_metadata_async(pdf_path, metadata),
+        update_keywords_async(pdf_path, keywords),
+        # update_summary_async(pdf_path, summary)
+    )
+
 async def main():
-    client = MongoClient("mongodb://localhost:27017/")  # Replace with your connection string
+    pdf_paths = file_paths  # List of PDF paths
 
     tasks = []
-    for file_path in file_paths:
-        task = asyncio.create_task(process_pdf(file_path, client, "intern_task", "documents"))
-        tasks.append(task)
+    for pdf_path in pdf_paths:
+        tasks.append(process_pdf(pdf_path))
 
     await asyncio.gather(*tasks)
-
-    client.close()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-    
-    
-# Getting the keywords and Updating it into the MongoDB collection
-async def main():
-
-    tasks = []
-    for file_path in file_paths:
-        task = asyncio.create_task(process_pdf(file_path, client, database_name, collection_name))
-        tasks.append(task)
-
-    await asyncio.gather(*tasks)
-
-    client.close()
 
 if __name__ == "__main__":
     asyncio.run(main())

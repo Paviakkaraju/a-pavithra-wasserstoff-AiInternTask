@@ -6,37 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import asyncio
 
-# Updating the metadata in MongoDB
-client = MongoClient("mongodb://localhost:27017/")
-database_name = "intern_task"
-collection_name = "documents"
-pdf_collection = client["intern_task"]["documents"]
 
-
-async def insert_document(client, database_name, collection_name, document):
-    db = client[database_name]
-    collection = db[collection_name]
-    result = collection.insert_one(document)
-    print(f"Inserted document with ID: {result.inserted_id}")
-
-
-async def process_pdf(file_path, client, database_name, collection_name):
-    # Check if PDF is already processed based on hash
-    if check_pdf(file_path):
-        print(f"Document details already available for {file_path}!")
-        return
-
-    # Extract metadata and calculate hash
-    meta_data, _ = metadata(file_path)
-    with open(file_path, 'rb') as f:
-        meta_data['file_hash'] = hashlib.md5(f.read()).hexdigest()
-
-    # Insert document asynchronously
-    await insert_document(client, database_name, collection_name, meta_data)
-    print(f'Added {os.path.basename(file_path)} to the database')
-
-
-def metadata(file_path):
+def get_metadata(file_path):
     with open(file_path, 'rb') as pdf:
         reader = PdfReader(pdf)
         meta_data = {
@@ -46,10 +17,28 @@ def metadata(file_path):
             'number_of_pages': len(reader.pages),
             'file_processed_on': datetime.now().isoformat()
         }
-    return meta_data, pdf
+    return meta_data
+
+# Updating the metadata in MongoDB
+client = MongoClient("mongodb://localhost:27017/")
+db = client["intern_task"]
+collection = db["documents"]
 
 
-def check_pdf(file_path):
-    with open(file_path, 'rb') as f:
-        file_hash = hashlib.md5(f.read()).hexdigest()
-    return pdf_collection.find_one({'file_hash': file_hash}) is not None
+async def update_metadata_async(pdf_path, metadata):
+    result = collection.find_one({"location": pdf_path})
+    if result and "metadata" in result and result["metadata"]:
+        return
+    collection.update_one({"location": pdf_path}, {"$set": {"metadata": metadata}}, upsert=True)
+
+async def update_keywords_async(pdf_path, keywords):
+    result = collection.find_one({"location": pdf_path})
+    if result and "keywords" in result and result["keywords"]:
+        return
+    collection.update_one({"location": pdf_path}, {"$set": {"keywords": keywords}}, upsert=True)
+
+async def update_summary_async(pdf_path, summary):
+    result = collection.find_one({"location": pdf_path})
+    if result and "summary" in result and result["summary"]:
+        return
+    collection.update_one({"location": pdf_path}, {"$set": {"summary": summary}}, upsert=True)
